@@ -11,8 +11,9 @@ from pars import entry
 from aiofiles import os
 
 logging.basicConfig(level=logging.INFO)
-
-API_TOKEN = '5600953210:AAEGEP8_bXrrXfPvB69uP5ShNzazNmL-9lg'
+with open("token.txt", "r") as token_file:
+    token = token_file.readline()
+API_TOKEN = token
 
 bot = Bot(token=API_TOKEN)
 
@@ -30,9 +31,20 @@ class Searcher(StatesGroup):
     one_more_thing = State()
 
 
+@dp.message_handler(state='*', commands='help')
+async def Help(message: types.Message):
+    await message.reply(
+        "Этот бот поможет вам собрать информацию о скидкх в интернет магазине Магнит (https://magnit.ru/). "
+        "Для запуска бота напишите команду /start или выберете ее в меню. "
+        "Если вы хотите отключить или перезапустить бота напишите команду /cancel (в меню она также доступна).\n \n"
+        "Не отправляйте запросы на скидки слишком часто, вас могут забанить на сайте магнита. "
+        "Если это все же произошло перезапустите роутер, бан пропадет. "
+        "Если вы отправили большой запрос подожите немного, боту нужно время, чтобы собрать информацию о скидках. "
+    )
+
+
 @dp.message_handler(commands='start')
 async def start(message: types.Message):
-
     await Searcher.name.set()
 
     await message.reply("Как вас зовут?")
@@ -68,7 +80,6 @@ async def process_age_invalid(message: types.Message):
 
 @dp.message_handler(lambda message: message.text.isdigit(), state=Searcher.age)
 async def process_age(message: types.Message, state: FSMContext):
-
     await Searcher.next()
     await state.update_data(age=int(message.text))
 
@@ -80,7 +91,7 @@ async def process_age(message: types.Message, state: FSMContext):
 
 @dp.message_handler(lambda message: message.text not in ["Дора", "Мейби-Бейби"], state=Searcher.gender)
 async def process_gender_invalid(message: types.Message):
-    return await message.reply("Ответ неверен, попробуйте еще раз")
+    return await message.reply("Вы неправы, попробуйте еще раз")
 
 
 @dp.message_handler(state=Searcher.gender)
@@ -109,7 +120,7 @@ async def process_gender(message: types.Message, state: FSMContext):
                 md.text(
                     md.text('Прияьно познакомиться,', md.bold(data['name'])),
                     md.text('Возраст:', md.code(data['age'])),
-                    md.text('Вы выбрали:', data['gender']),
+                    md.text('Вы выбрали:', data['хрень']),
                     md.text('Перейдем все же к поиску товаров'),
                     sep='\n',
                 ),
@@ -133,20 +144,19 @@ async def chose_city(message: types.Message, state: FSMContext):
     await message.reply("Сколько товаров хотите посмотреть?")
 
 
-# Check age. Age gotta be digit
-@dp.message_handler(lambda message: (not message.text.isdigit() or int(message.text) < 1 or int(message.text) > 1000),
+@dp.message_handler(lambda message: (not message.text.isdigit() or int(message.text) < 1 or int(message.text) > 2000),
                     state=Searcher.quantity_selection)
-async def process_age_invalid(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['quantity'] = message.text
-    await Searcher.next()
+async def process_age_invalid(message: types.Message):
     return await message.reply("Количество должно задаваться числом от 1 до 2000.\nСколько товаров хотите посмотреть? "
                                "(только цифры)")
 
 
-@dp.message_handler(lambda message: message.text.isdigit(), state=Searcher.quantity_selection)
+@dp.message_handler(lambda message: (message.text.isdigit() and 1 < int(message.text) < 2000),
+                    state=Searcher.quantity_selection)
 async def process_age(message: types.Message, state: FSMContext):
-
+    async with state.proxy() as data:
+        data['quantity'] = message.text
+    await Searcher.next()
     await state.update_data(quantity=int(message.text))
 
     await message.answer('Подождите несколько секунд...')
@@ -171,11 +181,11 @@ async def process_age(message: types.Message, state: FSMContext):
     await Searcher.previous()
 
 
-
 async def send_data(city_code='', chat_id='', age=20, quantity=50):
     file = await entry(city_path=city_code, age=age, quantity=quantity)
     await bot.send_document(chat_id=chat_id, document=open(file, 'rb'))
     await os.remove(file)
+
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)

@@ -26,9 +26,9 @@ async def entry(city_path='2', age=20, quantity=250):
     driver.get('https://magnit.ru/promo/')
     time.sleep(1)
 
-    close_button = driver.find_element('xpath', '/html/body/div[10]/div/div[1]/div[1]')
-    close_button.click()
-    time.sleep(1)
+    # close_button = driver.find_element('xpath', '/html/body/div[10]/div/div[1]/div[1]')
+    # close_button.click()
+    # time.sleep(1)
     # закрываю рекламу
 
     yes_button = driver.find_element('xpath', '/html/body/div[6]/div/div[1]/div[2]/div/div/button[2]')
@@ -52,9 +52,9 @@ async def entry(city_path='2', age=20, quantity=250):
     time.sleep(4)
     # выбираю нужный город
 
-    close_button = driver.find_element('xpath', '/html/body/div[10]/div/div[1]/div[1]')
-    close_button.click()
-    time.sleep(1)
+    # close_button = driver.find_element('xpath', '/html/body/div[10]/div/div[1]/div[1]')
+    # close_button.click()
+    # time.sleep(1)
     # закрываю рекламу
 
     hrefs = set()
@@ -89,8 +89,8 @@ async def entry(city_path='2', age=20, quantity=250):
     data = []
     i = 0
     for card in cards[:quantity + 1]:
-        card_title = card.find('div', class_='card-sale__title').text.strip()
         try:
+            card_title = card.find('div', class_='card-sale__title').text.strip()
             card_discount = card.find('div', class_='card-sale__discount').text.strip()
         except AttributeError:
             continue
